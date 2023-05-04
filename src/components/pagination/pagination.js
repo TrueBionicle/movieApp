@@ -1,9 +1,9 @@
-import React from "react";
-import { Pagination } from "antd";
-import "./pagination.css";
+import React from 'react'
+import { Pagination } from 'antd'
+import './pagination.css'
 export default class PaginationElement extends React.Component {
   render() {
-    const { totalItems, currentPage, onGetItemIndex } = this.props;
+    const { totalItems, currentPage, onGetItemIndex } = this.props
     return (
       <Pagination
         margin={100}
@@ -12,9 +12,9 @@ export default class PaginationElement extends React.Component {
         defaultPageSize={6}
         total={totalItems}
         onChange={(e) => {
-          onGetItemIndex(e);
+          onGetItemIndex(e)
         }}
       />
-    );
+    )
   }
 }

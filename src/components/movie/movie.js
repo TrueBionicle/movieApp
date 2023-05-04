@@ -1,13 +1,24 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Card, Rate } from "antd";
-import "./movie.css";
-import { format } from "date-fns";
-import Score from "../vote/vote";
-import Vote from "../vote/vote";
-import genresContext from "../genresContext";
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Card, Rate } from 'antd'
+import './movie.css'
+import { format } from 'date-fns'
+
+import Vote from '../vote/vote'
+import genresContext from '../genresContext'
 export default class Movie extends React.Component {
-  ratedMovie = {};
+  static defaultProps = {
+    label: 'Task',
+    date: new Date(),
+    done: false,
+  }
+
+  static propTypes = {
+    title: PropTypes.string,
+    id: PropTypes.number,
+    date: PropTypes.object,
+  }
+  ratedMovie = {}
   render() {
     const {
       id,
@@ -21,8 +32,8 @@ export default class Movie extends React.Component {
       onChangeMovieRate,
       localRatedMovieDB,
       vote,
-    } = this.props;
-    const formattedDate = date ? format(new Date(date), "MMMM dd, yyyy") : "";
+    } = this.props
+    const formattedDate = date ? format(new Date(date), 'MMMM dd, yyyy') : ''
 
     // let genreMap = new Map();
 
@@ -30,10 +41,10 @@ export default class Movie extends React.Component {
     //   genreMap.set(genre.id, genre.name);
     // });
 
-    let movieMap = new Map();
+    let movieMap = new Map()
     movieRate.map((movie) => {
-      movieMap.set(movie.id, movie.rating);
-    });
+      movieMap.set(movie.id, movie.rating)
+    })
 
     return (
       <genresContext.Consumer>
@@ -41,14 +52,7 @@ export default class Movie extends React.Component {
           return (
             <Card
               hoverable
-              cover={
-                <img
-                  src={poster}
-                  alt={title}
-                  title={title}
-                  className="movie_img"
-                ></img>
-              }
+              cover={<img src={poster} alt={title} title={title} className="movie_img"></img>}
               className="movie"
             >
               <div className="movie_info">
@@ -61,11 +65,11 @@ export default class Movie extends React.Component {
                       <li key={genresId} className="movie_genres-genre">
                         {/* {genreMap.get(genresId)} */}
                         {(() => {
-                          let a = genres.filter((item) => item.id == genresId);
-                          return a[0].name;
+                          let a = genres.filter((item) => item.id == genresId)
+                          return a[0].name
                         })()}
                       </li>
-                    );
+                    )
                   })}
                 </ul>
                 <p className="movie_summary">{overview}</p>
@@ -74,14 +78,14 @@ export default class Movie extends React.Component {
                   value={localRatedMovieDB[id]}
                   count={10}
                   onChange={(e) => {
-                    onChangeMovieRate(id, e);
+                    onChangeMovieRate(id, e)
                   }}
                 />
               </div>
             </Card>
-          );
+          )
         }}
       </genresContext.Consumer>
-    );
+    )
   }
 }
