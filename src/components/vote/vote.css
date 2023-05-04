@@ -1,0 +1,17 @@
+.score {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    width: 40px;
+    height: 40px;
+    border: 2px solid;
+
+    border-radius: 100%;
+}
+
+.score-item {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
