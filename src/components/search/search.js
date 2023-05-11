@@ -8,14 +8,14 @@ export default class Search extends React.Component {
   }
 
   render() {
-    const { getMovies } = this.props
+    const { onSearch, context } = this.props
     return (
       <input
         type="text"
         className="search"
         placeholder="Type to search ..."
         onChange={debounce((e) => {
-          getMovies(e.target.value)
+          onSearch(context, e.target.value, 1)
         }, 1000)}
       ></input>
     )

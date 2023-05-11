@@ -4,9 +4,13 @@ import { Card, Rate } from 'antd'
 import './movie.css'
 import { format } from 'date-fns'
 
+import MovieServices from '../../services/movieServices'
+import Actions from '../../services/actions'
 import Vote from '../vote/vote'
 import genresContext from '../genresContext'
 export default class Movie extends React.Component {
+  movieServices = new MovieServices()
+  actions = new Actions()
   static defaultProps = {
     label: 'Task',
     date: new Date(),
@@ -16,13 +20,11 @@ export default class Movie extends React.Component {
   static propTypes = {
     title: PropTypes.string,
     id: PropTypes.number,
-    date: PropTypes.object,
   }
-  ratedMovie = {}
   render() {
     const {
       id,
-      date,
+      releaseDate,
       title,
       overview,
       poster,
@@ -32,8 +34,9 @@ export default class Movie extends React.Component {
       onChangeMovieRate,
       localRatedMovieDB,
       vote,
+      context,
     } = this.props
-    const formattedDate = date ? format(new Date(date), 'MMMM dd, yyyy') : ''
+    const formattedDate = releaseDate ? format(new Date(releaseDate), 'MMMM dd, yyyy') : ''
 
     // let genreMap = new Map();
 
@@ -78,7 +81,7 @@ export default class Movie extends React.Component {
                   value={localRatedMovieDB[id]}
                   count={10}
                   onChange={(e) => {
-                    onChangeMovieRate(id, e)
+                    onChangeMovieRate(id, e, context)
                   }}
                 />
               </div>

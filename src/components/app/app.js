@@ -1,159 +1,68 @@
 import React from 'react'
-import axios from 'axios'
 import { Pagination, Spin, Tabs } from 'antd'
 
 import './app.css'
 import 'antd/dist/reset.css'
 import genresContext from '../genresContext'
+import MovieServices from '../../services/movieServices'
+import Actions from '../../services/actions'
 
 import Search from './../search/search'
 import Movie from './../movie/movie'
-
 export default class App extends React.Component {
   localRatedMovieDB = {}
+
+  movieServices = new MovieServices()
+  actions = new Actions()
   state = {
     isLoading: true,
     isLoadingRated: true,
     results: [],
-    itemPerPage: 6,
     getRated: [],
+    currentPage: 1,
+    guest_session_id: window.localStorage.getItem('guest_session_id'),
   }
 
-  setPaginationOptions = (e = 1) => {
-    const currentPage = e
-    const lastItemIndex = currentPage * this.state.itemPerPage
-    const firstItemIndex = lastItemIndex - this.state.itemPerPage
+  url = 'https://api.themoviedb.org/3'
+  apiKey = 'api_key=00290063ec3b3c07a8c6adf6f7836f1a'
 
-    this.setState({
-      lastItemIndex,
-      firstItemIndex,
-      currentPage,
-    })
-  }
-
-  resetPaginationOptions = () => {
-    this.setState({
-      currentPage: 1,
-      firstItemIndex: 0,
-      lastItemIndex: this.state.itemPerPage,
-    })
-  }
-
-  getGenres = async () => {
-    const {
-      data: { genres },
-    } = await axios.get(
-      'https://api.themoviedb.org/3/genre/movie/list?api_key=00290063ec3b3c07a8c6adf6f7836f1a&language=ru-RU'
-    )
-    console.log(genres)
-    this.setState({ genres })
-  }
-
-  getMovies = async (query = 'Агент') => {
-    const info = {
-      url: 'https://api.themoviedb.org/3/search/movie?',
-      apiKey: 'api_key=00290063ec3b3c07a8c6adf6f7836f1a',
-    }
-    const {
-      data: { results },
-    } = await axios.get(`${info.url}${info.apiKey}&language=ru-RU&query=${query}`)
-    this.setState({ results, isLoading: false })
-    this.resetPaginationOptions()
-  }
-
-  makeGuestSession = async () => {
-    console.log('Получаем гостевой запрос')
-    const {
-      data: { guest_session_id },
-    } = await axios.get(
-      'https://api.themoviedb.org/3/authentication/guest_session/new?api_key=00290063ec3b3c07a8c6adf6f7836f1a'
-    )
-    this.setState({ guest_session_id })
-    console.log(guest_session_id)
-  }
-
-  changeMovieRate = (id, rating) => {
-    console.log(id, rating)
-    if (rating > 0) {
-      this.addRatedFilm(id, rating)
-      this.localRatedMovieDB[id] = rating
-      this.getRatedMovie()
-    } else {
-      delete this.localRatedMovieDB[id]
-      this.removeRatedFilm(id)
-      this.getRatedMovie()
-    }
-  }
-
-  addRatedFilm = (id, rating) => {
-    axios.post(
-      `https://api.themoviedb.org/3/movie/${id}/rating?api_key=00290063ec3b3c07a8c6adf6f7836f1a&guest_session_id=${this.state.guest_session_id}`,
-      {
-        value: rating,
+  async componentDidMount() {
+    try {
+      if (window.localStorage.getItem('guest_session_id') == null) {
+        await this.movieServices.makeGuestSession(this)
+      } else {
+        await this.movieServices.setRatedMovie(this)
       }
-    )
-  }
-
-  removeRatedFilm = (id) => {
-    axios.delete(
-      `https://api.themoviedb.org/3/movie/${id}/rating?api_key=00290063ec3b3c07a8c6adf6f7836f1a&guest_session_id=${this.state.guest_session_id}`
-    )
-  }
-
-  getRatedMovie = async () => {
-    if (this.state.guest_session_id) {
-      await axios
-        .get(
-          `https://api.themoviedb.org/3/guest_session/${this.state.guest_session_id}/rated/movies?api_key=00290063ec3b3c07a8c6adf6f7836f1a&language=ru-RU&sort_by=created_at.asc`
-        )
-        .then((result) => {
-          if (Object.keys(this.localRatedMovieDB).length == result.data.results.length) {
-            this.setState({
-              getRated: result.data.results,
-              isLoadingRated: false,
-            })
-          } else {
-            this.setState({ isLoadingRated: true })
-            this.getRatedMovie()
-          }
-        })
+      await this.movieServices.getRatedMovie(this)
+      await this.movieServices.getGenres(this)
+      await this.movieServices.getMovies(this, 'Петя', 1)
+    } catch (error) {
+      alert('Не удалось подключиться к сети. Попробуйте еще раз')
     }
-    console.log(this.localRatedMovieDB)
-    console.log(this.state.getRated.length)
-  }
-
-  componentDidMount() {
-    this.makeGuestSession()
-    this.setPaginationOptions()
-    this.getGenres()
-    this.getMovies()
   }
 
   render() {
-    console.log('Рендер...')
-    const { isLoading, isLoadingRated, results, genres, lastItemIndex, firstItemIndex, getRated } = this.state
+    const { isLoading, isLoadingRated, results, genres, getRated } = this.state
     const localRatedMovieDB = this.localRatedMovieDB
-    const currentIndex = results.slice(firstItemIndex, lastItemIndex)
-    const currentIndex2 = getRated.slice(firstItemIndex, lastItemIndex)
     const items = [
       {
         key: '1',
         label: 'Search',
         children: (
           <div>
-            <Search getMovies={this.getMovies} />
+            <Search onSearch={this.movieServices.getMovies} context={this} />
             <div className="container">
               {isLoading ? (
                 <div className="spin">
                   <Spin size="large" />
                 </div>
               ) : (
-                currentIndex.map((item) => {
+                results.map((item) => {
                   return (
                     <Movie
                       key={item.id}
                       id={item.id}
-                      date={item.release_date}
+                      releaseDate={item.release_date}
                       title={item.title}
                       overview={item.overview}
                       poster={
@@ -164,11 +73,11 @@ export default class App extends React.Component {
                       genresIds={item.genre_ids}
                       // genres={genres}
                       movieRate={getRated}
-                      onChangeMovieRate={this.changeMovieRate}
-                      onGetRatedMovie={this.getRatedMovie}
+                      onChangeMovieRate={this.actions.changeMovieRate}
                       onPost={this.post}
                       localRatedMovieDB={localRatedMovieDB}
                       vote={item.vote_average}
+                      context={this}
                     />
                   )
                 })
@@ -176,10 +85,12 @@ export default class App extends React.Component {
             </div>
             <div className="pagination-move-center">
               <Pagination
-                total={this.state.results.length}
-                pageSize={this.state.itemPerPage}
+                total={this.state.total_results}
+                pageSize={20}
                 current={this.state.currentPage}
-                onChange={this.setPaginationOptions}
+                onChange={(e) => {
+                  this.movieServices.getMovies(this, this.state.searchValue, e)
+                }}
               />
             </div>
           </div>
@@ -197,7 +108,7 @@ export default class App extends React.Component {
                   <Spin size="large" />
                 </div>
               ) : (
-                currentIndex2.map((item) => {
+                getRated.map((item) => {
                   return (
                     <Movie
                       key={item.id}
@@ -213,23 +124,19 @@ export default class App extends React.Component {
                       genresIds={item.genre_ids}
                       // genres={genres}
                       movieRate={getRated}
-                      onChangeMovieRate={this.changeMovieRate}
+                      onChangeMovieRate={this.actions.changeMovieRate}
                       onGet={this.getM}
                       onPost={this.post}
                       localRatedMovieDB={localRatedMovieDB}
                       vote={item.vote_average}
+                      context={this}
                     />
                   )
                 })
               )}
             </div>
 
-            <Pagination
-              total={getRated.length}
-              current={this.state.currentPage}
-              pageSize={this.state.itemPerPage}
-              onChange={this.setPaginationOptions}
-            />
+            <Pagination total={getRated.length} pageSize={20} />
           </div>
         ),
       },
@@ -238,15 +145,7 @@ export default class App extends React.Component {
     return (
       <div className="app">
         <genresContext.Provider value={genres}>
-          <Tabs
-            size="large"
-            className="tabs"
-            items={items}
-            onChange={this.getRatedMovie}
-            onTabClick={() => {
-              this.resetPaginationOptions()
-            }}
-          ></Tabs>
+          <Tabs size="large" className="tabs" items={items} onChange={this.getRatedMovie}></Tabs>
         </genresContext.Provider>
       </div>
     )
