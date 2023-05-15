@@ -3,10 +3,6 @@ import './search.css'
 import { debounce } from 'lodash'
 
 export default class Search extends React.Component {
-  state = {
-    label: '',
-  }
-
   render() {
     const { onSearch, context } = this.props
     return (

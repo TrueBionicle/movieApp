@@ -6,9 +6,11 @@ import 'antd/dist/reset.css'
 import genresContext from '../genresContext'
 import MovieServices from '../../services/movieServices'
 import Actions from '../../services/actions'
+import Error from '../error/error'
 
 import Search from './../search/search'
 import Movie from './../movie/movie'
+
 export default class App extends React.Component {
   localRatedMovieDB = {}
 
@@ -17,6 +19,8 @@ export default class App extends React.Component {
   state = {
     isLoading: true,
     isLoadingRated: true,
+    isError: false,
+    errorMessage: '',
     results: [],
     getRated: [],
     currentPage: 1,
@@ -27,29 +31,27 @@ export default class App extends React.Component {
   apiKey = 'api_key=00290063ec3b3c07a8c6adf6f7836f1a'
 
   async componentDidMount() {
-    try {
-      if (window.localStorage.getItem('guest_session_id') == null) {
-        await this.movieServices.makeGuestSession(this)
-      } else {
-        await this.movieServices.setRatedMovie(this)
-      }
-      await this.movieServices.getRatedMovie(this)
-      await this.movieServices.getGenres(this)
-      await this.movieServices.getMovies(this, 'Петя', 1)
-    } catch (error) {
-      alert('Не удалось подключиться к сети. Попробуйте еще раз')
+    if (window.localStorage.getItem('guest_session_id') == null) {
+      await this.movieServices.makeGuestSession(this)
+    } else {
+      await this.movieServices.setRatedMovie(this)
     }
+    await this.movieServices.getRatedMovie(this)
+    await this.movieServices.getGenres(this)
+    await this.movieServices.getMovies(this, 'Петя', 1)
   }
 
   render() {
-    const { isLoading, isLoadingRated, results, genres, getRated } = this.state
+    const { isLoading, isLoadingRated, results, genres, getRated, errorMessage } = this.state
     const localRatedMovieDB = this.localRatedMovieDB
     const items = [
       {
         key: '1',
         label: 'Search',
         children: (
-          <div>
+          <div className="wrapper">
+            {this.state.isError == true ? <Error errorMessage={errorMessage} /> : null}
+
             <Search onSearch={this.movieServices.getMovies} context={this} />
             <div className="container">
               {isLoading ? (
@@ -135,7 +137,6 @@ export default class App extends React.Component {
                 })
               )}
             </div>
-
             <Pagination total={getRated.length} pageSize={20} />
           </div>
         ),

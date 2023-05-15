@@ -37,6 +37,7 @@
 .movie_img {
     height: 100%;
     width: auto !important;
+    max-width: 220px;
     border-top-left-radius: 8px !important;
     border-top-right-radius: 0px !important;
     border-bottom-left-radius: 8px !important;
